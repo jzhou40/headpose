@@ -114,7 +114,8 @@ def weighted_MSE_trans(y_true, y_pred):
     # y_weight = tf.where(condition,y_true*10000,tf.ones_like(y_true,dtype="float32"))
 
     condition = tf.greater(tf.abs(y_true),tf.ones_like(y_true,dtype="float32")*1)
-    y_weight = tf.where(condition,tf.ones_like(y_true,dtype="float32")*tf.abs(y_true),tf.ones_like(y_true,dtype="float32"))
+#     y_weight = tf.where(condition,tf.ones_like(y_true,dtype="float32")*tf.abs(y_true),tf.ones_like(y_true,dtype="float32"))
+    y_weight = tf.where(condition,tf.ones_like(y_true,dtype="float32")*10*tf.abs(y_true),tf.ones_like(y_true,dtype="float32"))
     # y_weight = y_true*10000
     return K.mean(K.square(y_pred -y_true)*y_weight, axis=-1)
 ####
@@ -212,6 +213,8 @@ def get_model_structure(input_shape, output_column):
     cnn.add(MaxPooling2D(pool_size=(2, 2)))
     cnn.add(BatchNormalization())
     # cnn.add(Dropout(0.5))
+    cnn.add(Conv2D(128, kernel_size=3, activation='relu', padding='same'))
+    cnn.add(BatchNormalization())
     cnn.add(Conv2D(128, kernel_size=3, activation='relu', padding='same'))
     cnn.add(BatchNormalization())
     # cnn.add(Dropout(0.5))
