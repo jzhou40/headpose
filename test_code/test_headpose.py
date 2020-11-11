@@ -305,7 +305,8 @@ def weighted_MSE_trans(y_true, y_pred):
     # y_weight = tf.where(condition,y_true*10000,tf.ones_like(y_true,dtype="float32"))
 
     condition = tf.greater(tf.abs(y_true),tf.ones_like(y_true,dtype="float32")*1)
-    y_weight = tf.where(condition,tf.ones_like(y_true,dtype="float32")*tf.abs(y_true),tf.ones_like(y_true,dtype="float32"))
+#     y_weight = tf.where(condition,tf.ones_like(y_true,dtype="float32")*tf.abs(y_true),tf.ones_like(y_true,dtype="float32"))
+    y_weight = tf.where(condition,tf.ones_like(y_true,dtype="float32")*10*tf.abs(y_true),tf.ones_like(y_true,dtype="float32"))
     # y_weight = y_true*10000
     return K.mean(K.square(y_pred -y_true)*y_weight, axis=-1)
 
