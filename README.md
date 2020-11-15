@@ -4,11 +4,13 @@ Train model
 2. input saving path as argument 4  
 3. input 'rot/trans' ('rotation/translation') as argument 5 
 4. change log file path and name
-5. submit bash file run_hui.sh to cluster and run
+5. submit bash file run.sh to cluster and run
 
 
 Test 
-1. input saving path as argument 3
-2. input model path as argument 4
-3. change log file path and name
-5. submit bash file run_headpose.sh to cluster and run
+1. select 'rot/trans' to be input as argument 1
+2. input data directory path as argument 2
+3. input saving path as argument 3
+4. input model path as argument 4
+5. change log file path and name
+6. submit bash file run_test.sh to cluster and run

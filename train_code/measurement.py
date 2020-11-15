@@ -4,7 +4,6 @@ import data_process
 import cnn_model
 from data_process import *
 from cnn_model import *
-# import test_video_regression_WithoutGT
 import plot
 import numpy as np
 import pandas as pd
@@ -106,25 +105,13 @@ def LOOCV(columns_name = None, save_dir_file = None, train_subject_list = None, 
     else:
         ins_per_sub = 320
 
-    # self-define model
-    # model = cnn_model.get_model_structure(input_shape=x_val.shape[1:], output_column=columns_name)
-
-    # pretrain vgg16
     model = cnn_model.get_model_structure(input_shape=x_val.shape[1:], output_column=columns_name)
-
-    # if columns_name == ['rotX', 'rotY', 'rotZ']:
-    #     model = load_model("/u/erdos/students/hyuan11/MRI/model/Dec_15_multi_sub_rot_weights.h5",
-    #                        custom_objects={"weighted_MAE":cnn_model.weighted_MAE_rot})
-    # elif columns_name == ["transX", "transY", "transZ"]:
-    #     model = load_model("/u/erdos/students/hyuan11/MRI/model/Dec_15_multi_sub_rot_weights.h5",
-    #                        custom_objects={"weighted_MAE": cnn_model.weighted_MAE_trans})
 
     model, training_loss, val_loss = cnn_model.model_fitting_generator(model, x_train=x_train_dic, y_train=y_train_dic,
                                                                        x_val=x_val, y_val=y_val,
                                                                        save_dir_file=save_dir_file,
                                                                        batch_size=batch, epochs=epochs,
                                                                        ins_per_sub=ins_per_sub)#,
-                                                                      # sub233 = x_train_dic[233])
 
     #get prediction for models
     for sub in train_subject_list:
@@ -137,76 +124,6 @@ def LOOCV(columns_name = None, save_dir_file = None, train_subject_list = None, 
         val_pred = model.predict(x_val_dic[sub])
         np.savetxt(save_dir_file + "val_sub_{}_pred.csv".format(sub), np.array(val_pred))
         np.savetxt(save_dir_file + "val_sub_{}_real.csv".format(sub), np.array(y_val_dic[sub]))
-
-# def rotation_single_sub(save_dir_file = None, interval_frame = None, subject = None, batch = 128,
-                        # epochs = 500, test_sample = 80, columns_name = None,img_grad = None):
-    # pass
-    # if not os.path.exists(save_dir_file):
-    #     m = os.umask(0)
-    #     os.makedirs(save_dir_file)
-    #     os.umask(m)
-    #
-    # print("This is single subject_{}".format(subject))
-    # x_train, y_train, x_test, y_test, test_time_arr, train_time_arr= data_process.data_load_single_subject(columns_name = columns_name,
-    #                                                                                                        test_subject = subject,
-    #                                                                                                         test_sample=test_sample,
-    #                                                                                                         interval_frame=interval_frame,
-    #                                                                                                         img_grad = img_grad)
-    # print("x_train.shape:",x_train.shape)
-    # print("y_train.shape:",y_train.shape)
-    # print("have completed loading data ")
-    #
-    # # columns_name = ['rotX', 'rotY', 'rotZ']
-    # print("\nthis is to train model that could predict {} \n".format(columns_name))
-    #
-    # model = cnn_model.get_model_structure(input_shape=x_train.shape[1:],output_column = columns_name)
-    #
-    # # if columns_name == ['rotX', 'rotY', 'rotZ']:
-    # #     model = load_model("/u/erdos/students/hyuan11/MRI/model/Dec_13_multi_sub_rot_weights.h5",
-    # #                        custom_objects={"weighted_MAE":cnn_model.weighted_MAE})
-    # # elif columns_name == ["transX", "transY", "transZ"]:
-    # #     #load model for translation part
-    # #     pass
-    # plot_model(model, to_file = save_dir_file + 'model_plot.png', show_shapes=True, show_layer_names=True)
-    # model, training_loss, val_loss = cnn_model.model_fitting(model, x_train = x_train, y_train = y_train,
-    #                                                          x_val = x_test, y_val = y_test,
-    #                                                          batch_size=batch, epochs=epochs,save_dir_file=save_dir_file)
-    #
-    # pred_test_trans = model.predict(x_test)
-    # pred_train_trans = model.predict(x_train)
-    # print("pred_train_trans.shape:",pred_train_trans.shape)
-    # print("pred_test_trans.shape:",pred_test_trans.shape)
-    # print("test_time_arr.shape",test_time_arr.shape)
-    # print("train_time_arr.shape",train_time_arr.shape)
-    #
-    # predict_test = pd.DataFrame(np.concatenate((pred_test_trans, test_time_arr),axis =1), columns= columns_name + ['time_sec'])
-    # predict_test.to_csv(save_dir_file + "Predict_test_{}.csv".format(subject), index=False)
-    #
-    # predict_train = pd.DataFrame(np.concatenate((pred_train_trans, train_time_arr),axis =1), columns= columns_name + ['time_sec'])
-    # predict_train.to_csv(save_dir_file + "Predict_train_{}.csv".format(subject), index=False)
-    #
-    # if interval_frame:
-    #     real_train = pd.DataFrame(np.concatenate((y_train, train_time_arr), axis =1)[::39], columns = columns_name + ['time_sec'])
-    #     real_train.to_csv(save_dir_file + "Label_train_{}.csv".format(subject), index=False)
-    #
-    #     real_test = pd.DataFrame(np.concatenate((y_test, test_time_arr), axis =1), columns = columns_name + ['time_sec'])
-    #     real_test.to_csv(save_dir_file + "Label_test_{}.csv".format(subject), index=False)
-    #
-    #     plot.plot_func(columns = columns_name, sub=subject, save_dir=save_dir_file, label_train=real_train, label_test=real_test,
-    #                    pred_train = predict_train[::39].reset_index(drop=True), pred_test=predict_test,
-    #                    training_loss=training_loss, val_loss=val_loss)
-    # else:
-    #     real_train = pd.DataFrame(np.concatenate((y_train , train_time_arr), axis=1), columns = columns_name + ['time_sec'])
-    #     real_train.to_csv(save_dir_file + "Label_train_{}.csv".format(subject), index=False)
-    #
-    #     real_test = pd.DataFrame(np.concatenate((y_test , test_time_arr), axis=1), columns = columns_name + ['time_sec'])
-    #     real_test.to_csv(save_dir_file + "Label_test_{}.csv".format(subject), index=False)
-    #
-    #     plot.plot_func(columns = columns_name, sub = subject, save_dir = save_dir_file,label_train = real_train, label_test = real_test,
-    #                     pred_train = predict_train, pred_test = predict_test,
-    #                     training_loss = training_loss, val_loss = val_loss)
-    # # K.clear_session()
-    # print("completed!!")
 
 
 def rotation_multiple_subs(columns_name = None, save_dir_file = None, subject_list = None, test_sample = 100,
@@ -236,9 +153,6 @@ def rotation_multiple_subs(columns_name = None, save_dir_file = None, subject_li
     df_r_p_long = {}
 
 
-    # data_list = [f for f in os.listdir(data_path) if f[:6] == "sub-NC"]
-
-
     for i in range(len(subject_list)):
         # find data by  subject:
 
@@ -251,9 +165,7 @@ def rotation_multiple_subs(columns_name = None, save_dir_file = None, subject_li
                                                                             Whole_data = False,
                                                                             img_grad = img_grad,
                                                                             combined_image = combined_image)
-        #,                                                                    path = data_path)
 
-        # print("\nmr:\n1st image:\n",xTrain[0,100,:10,:])
         print("training data: subject {}".format(subject_list[i]))
         print("xTrain.shape:", xTrain.shape)
         print("yTrain.shape:", yTrain.shape)
@@ -269,19 +181,6 @@ def rotation_multiple_subs(columns_name = None, save_dir_file = None, subject_li
         train_time_dic[subject_list[i]] = train_time_arr
         val_time_dic[subject_list[i]] = val_time_arr
 
-    # x_train = np.array(x_train).reshape(-1,xTrain.shape[1],xTrain.shape[2],len(columns_name))
-    # y_train = np.array(y_train).reshape(-1,len(columns_name))
-    # x_val = np.array(x_val).reshape(-1,xTrain.shape[1],xTrain.shape[2],len(columns_name))
-    # y_val = np.array(y_val).reshape(-1,len(columns_name))
-    # print("have completed loading data ")
-    # print("x_train.shape:",x_train.shape)
-    # print("y_train.shape:", y_train.shape)
-    # print("x_val.shape:", x_val.shape)
-    # print("y_val.shape:", y_val.shape)
-
-    # column = ['rotX', 'rotY', 'rotZ']
-    # print("\nthis is to train multiplt_subjects model that could predict rotation \n")
-    # research for this part(split)
     x_val = np.array(x_val)
     print("mr:x_val: max: {}; min: {}".format(np.max(x_val),np.min(x_val)))
     x_val = x_val.reshape(-1,x_val.shape[2],x_val.shape[3],x_val.shape[4])
@@ -291,17 +190,6 @@ def rotation_multiple_subs(columns_name = None, save_dir_file = None, subject_li
     print("mr:y_val.shape:",y_val.shape)
 
     model = cnn_model.get_model_structure(input_shape=x_val.shape[1:], output_column = columns_name)
-    # model = cnn_model.maxpool_cnn(input_shape=x_val.shape[1:], output_column = columns_name)
-    # if columns_name == ['rotX', 'rotY', 'rotZ']:
-    #     model = load_model("/u/erdos/students/hyuan11/MRI/model/Dec_15_multi_sub_rot_weights.h5",
-    #                        custom_objects={"weighted_MAE":cnn_model.weighted_MAE_rot})
-    # elif columns_name == ["transX", "transY", "transZ"]:
-    #     model = load_model("/u/erdos/students/hyuan11/MRI/model/Dec_15_multi_sub_rot_weights.h5",
-    #                        custom_objects={"weighted_MAE": cnn_model.weighted_MAE_trans})
-
-    #load model for translation part
-    # model = load_model("/u/erdos/csga/jzhou40/MRI_Project/train/train_comb_512+256+128+64_x+y_noskip_w_200true/noskip_gradient_multiSubs_rot/weights_single_best.h5",
-    #                    custom_objects={'weighted_MSE_rot': cnn_model.weighted_MSE_rot})
 
     model, training_loss, val_loss = cnn_model.model_fitting_generator(model, x_train=x_train_dic, y_train=y_train_dic,
                                                              x_val = x_val, y_val = y_val,save_dir_file = save_dir_file,
@@ -383,34 +271,13 @@ def rotation_multiple_subs(columns_name = None, save_dir_file = None, subject_li
         tmp.to_csv(save_dir_file + "short_r2_p_value.csv")
 
         tmp_long = pd.DataFrame(df_r_p_long).transpose()
-        if columns_name == ['rotY']:
+        if columns_name == ['rotY'] :
             tmp.columns = ["rotY_r_2", "rotY_P"]
         elif columns_name ==['rotX', 'rotY', 'rotZ']:
-            tmp.columns = ["rotx_r_2", "rotY_r_2", "rotZ_r_2", "rotX_P", "rotY_P", "rotZ_P"]
+            tmp_long.columns = ["rotx_r_2", "rotY_r_2", "rotZ_r_2", "rotX_P", "rotY_P", "rotZ_P"]
         else:
             tmp.columns = ["transX_r_2", "transY_r_2", "transZ_r_2", "transX_P", "transY_P", "transZ_P"]
         tmp_long = tmp_long.sort_index()
 
         print("saving to r-p file", flush=True)
         tmp_long.to_csv(save_dir_file + "long_r2_p_value.csv")
-
-        # move_file(save_dir_file,single_sub_dir,"{}*".format(sub))
-    #
-    # def test_new_data_func(model_name, subject, columns_name):
-    #     """
-    #     sys.argv[1]:model's name (eg: Dec_15_multi_sub_rot_weights.h5) : str
-    #     sys.argv[2]:subject_name: str (eg:"NC250_01")
-    #         ['NC254_02', 'NC250_03', 'NC250_04', 'NC250_02', 'NC254_04', 'NC254_03', 'NC251_02', 'NC255_04', 'NC255_03',
-    #          'NC255_02', 'NC251_03', 'NC252_01', 'NC254_01', 'NC250_01', 'NC251_01', 'NC255_01', 'NC252_02']
-    #     sys.argv[3]: "rot" or "trans": str
-    #
-    #     """
-    #     currentDT = datetime.datetime.now()
-    #     MD = "{}{}".format(currentDT.month, currentDT.day)
-    #     HMS = "{}{}{}".format(currentDT.hour, currentDT.minute, currentDT.second)
-    #     start = time.time()
-    #     # test_single_subject(subject=sys.argv[2], columns_name=["rotX", "rotY", "rotZ"], save_dir_file="/u/erdos/students/hyuan11/MRI/{}_{}_{}")
-    #     test_video_regression_WithoutGT.test_single_subject(model_name= model_name, subject=subject, columns_name=columns_name,
-    #                 save_dir_file="/u/erdos/students/hyuan11/MRI/upload/{}_{}_test_new_sub_{}/".format(MD,HMS,subject))
-    #     end = time.time()
-    #     print("time_cost:",end-start)

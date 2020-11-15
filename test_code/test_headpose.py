@@ -24,7 +24,6 @@ def crop_img(img):
     return img
 
 def img_read(path,img_grad,crop, combined_image):
-    # try:
     if not img_grad:
         img = cv2.imread(path, 0)
         img = cv2.resize(img, (112, 112))
@@ -43,9 +42,6 @@ def img_read(path,img_grad,crop, combined_image):
     if crop:
         img = crop_img(img)
     return img
-    # except Exception as e:
-    #     print(path[-10:])
-    #     print(e)
 
 def plot_func(columns, sub, save_dir, label, pred, name=None, withGT = True):
     for column in columns:
@@ -63,7 +59,6 @@ def plot_func(columns, sub, save_dir, label, pred, name=None, withGT = True):
                 plt.ylim((-4, 4))
 
             plt.subplot(212)
-            # plt.figure(figsize=(20, 12))
             plt.plot(np.array(pred['time_sec']), np.array(pred[column]))
             plt.title('{} {}'.format(sub, column))
             plt.legend(("prediction"))
@@ -102,10 +97,6 @@ def load_data(store_image_dir,interval_frame,img_grad,crop, combined_image):
     print("os.listdir(img_dir):",os.listdir(img_dir)[:5])
     sorted_img_list = sorted(os.listdir(img_dir),key=lambda x: x[-10:-4])
     print("sorted_img_list:",sorted_img_list[:5])
-    #predict per 1.3s:
-    # for img_path in sorted_img_list[39::39]:
-
-    #predict all frames:
     if interval_frame:
         interval_frame_num = interval_frame
         length = int(39 // interval_frame_num)
@@ -113,7 +104,6 @@ def load_data(store_image_dir,interval_frame,img_grad,crop, combined_image):
         x_train_list = []
 
         for i in range(39, len(sorted_img_list)-1,39):
-#        for i in range(39,391,39):  # only for test
             if i == 39:
                 print("first predict image:",sorted_img_list[i])
             img_num = int(sorted_img_list[i][6:12])
@@ -133,14 +123,12 @@ def load_data(store_image_dir,interval_frame,img_grad,crop, combined_image):
             for j in range(interval_frame_num-1):
                 try:
                     name_head = img_dir + 'frame_' + str(img_num + length * j).zfill(6) + '.png'
-                    # print("head:", name_head)
 
                     f_head = img_read(name_head,img_grad,crop, combined_image) - frame_0
 
                     name_tail = img_dir + 'frame_' + str(img_num + length * (j+1)).zfill(6) + '.png'
                     f_tail = img_read(name_tail,img_grad,crop, combined_image) - frame_0
                 except:
-                    # print("error: ", 'frame_' + str(img_num + length * (j+1)).zfill(6) + '.png')
                     pass
 
                 f_diff = f_tail - f_head
@@ -166,7 +154,6 @@ def test_single_subject_gpu(data_path = None, model_name = None, subject=None,in
     if save_dir_file[-1] != "/":
         save_dir_file = save_dir_file + '/'
 
-    # check if directory exist:
     if not os.path.exists(save_dir_file):
         m = os.umask(0)
         os.makedirs(save_dir_file)
@@ -192,7 +179,6 @@ def test_single_subject_gpu(data_path = None, model_name = None, subject=None,in
         filename = data_path + [f for f in os.listdir(data_path) if f.endswith('frame_times.csv')][0]
         with open(filename) as f:
             f.readline()
-        #    print(filename)
             for line in f:
                 if float(line.split(",")[-1]) < 0:
                     start_image += 1
@@ -200,10 +186,8 @@ def test_single_subject_gpu(data_path = None, model_name = None, subject=None,in
                     break
     else:
         try:
-            #store_image_dir = data_path + "/" + [f for f in os.listdir(data_path) if f.endswith("frame")][0] + "/"
             store_image_dir = data_path +  [f for f in os.listdir(data_path) if f.endswith("frame")][0] + "/"
         except:
-#            store_image_dir = data_path + "/" + [f for f in os.listdir(data_path) if f.endswith("frames")][0] + "/"
             store_image_dir = data_path  + [f for f in os.listdir(data_path) if f.endswith("frames")][0] + "/"
         print("store_image_dir:",store_image_dir)
 
@@ -220,7 +204,6 @@ def test_single_subject_gpu(data_path = None, model_name = None, subject=None,in
     time_all = list(map(lambda x: round(x,2),time_all))
     time_all = np.array(time_all)
     time_all = time_all.reshape(-1,1)
-    # print("time_all:{}\nlength:{}\n".format(time_all[:5],len(time_all)))
 
     # load model
     if use_gpu:
@@ -234,12 +217,10 @@ def test_single_subject_gpu(data_path = None, model_name = None, subject=None,in
     else:
         model = model_name
         y_pred = model.predict(x_input)
-        # K.clear_session()
 
     print("y_pred.shape:",y_pred.shape)
     pred_train = pd.DataFrame(np.concatenate((y_pred, time_all), axis=1),
                               columns = columns_name + ['time_sec'])
-    # to CSV file: note exlude time column
     if columns_name == ["rotX", "rotY", "rotZ"]:
         pred_train.to_csv(save_dir_file + "{}_rot_pred_long.csv".format(subject)) #eg: ./NC250_01/NC250_01_rot.csv
     else:
@@ -265,13 +246,8 @@ def test_single_subject_gpu(data_path = None, model_name = None, subject=None,in
             df_new_real.to_csv(save_dir_file + "/{}_trans_real_long.csv".format(sub))
         
     if withGT:
-        # print("enter with Ground truth")
         plot_func(columns = columns_name, sub = subject, save_dir = save_dir_file, label = df_real, pred = pred_train,
                   withGT = withGT)
-    # else:
-    #     print("enter No Ground truth")
-    #     plot_func(columns=columns_name, sub=subject, save_dir=save_dir_file, label=None, pred = pred_train,
-    #               withGT = withGT)
 
     if withGT:
         return pred_train, df_real, df_new_real
@@ -280,48 +256,22 @@ def test_single_subject_gpu(data_path = None, model_name = None, subject=None,in
 
 
 def weighted_MAE_rot(y_true, y_pred):
-    # return K.mean(K.abs((y_pred - y_true)*y_true*10000))
-    # condition = tf.greater(y_true*10000,tf.ones_like(y_true,dtype="float32"))
-    # y_weight = tf.where(condition,y_true*10000,tf.ones_like(y_true,dtype="float32"))
-
     condition = tf.greater(tf.abs(y_true),tf.ones_like(y_true,dtype="float32")*0.05)
-    y_weight = tf.where(condition,tf.ones_like(y_true,dtype="float32")*10,tf.ones_like(y_true,dtype="float32"))
-    # y_weight = y_true*10000
+    y_weight = tf.where(condition,tf.ones_like(y_true,dtype="float32")*200,tf.ones_like(y_true,dtype="float32"))
     return K.mean(K.abs((y_pred - y_true)*y_weight))  #modify： if <10^-4, *1; else 100  (233,234,244,245)
 
 def weighted_MAE_trans(y_true, y_pred):
-    # return K.mean(K.abs((y_pred - y_true)*y_true*10000))
-    # condition = tf.greater(y_true*10000,tf.ones_like(y_true,dtype="float32"))
-    # y_weight = tf.where(condition,y_true*10000,tf.ones_like(y_true,dtype="float32"))
-
     condition = tf.greater(tf.abs(y_true),tf.ones_like(y_true,dtype="float32")*1)
     y_weight = tf.where(condition,tf.ones_like(y_true,dtype="float32")*100*tf.abs(y_true),tf.ones_like(y_true,dtype="float32"))
-    # y_weight = y_true*10000
     return K.mean(K.abs((y_pred - y_true)*y_weight))
 
 def weighted_MSE_trans(y_true, y_pred):
-    # return K.mean(K.abs((y_pred - y_true)*y_true*10000))
-    # condition = tf.greater(y_true*10000,tf.ones_like(y_true,dtype="float32"))
-    # y_weight = tf.where(condition,y_true*10000,tf.ones_like(y_true,dtype="float32"))
-
     condition = tf.greater(tf.abs(y_true),tf.ones_like(y_true,dtype="float32")*1)
-#     y_weight = tf.where(condition,tf.ones_like(y_true,dtype="float32")*tf.abs(y_true),tf.ones_like(y_true,dtype="float32"))
     y_weight = tf.where(condition,tf.ones_like(y_true,dtype="float32")*10*tf.abs(y_true),tf.ones_like(y_true,dtype="float32"))
-    # y_weight = y_true*10000
     return K.mean(K.square(y_pred -y_true)*y_weight, axis=-1)
 
 def weighted_MSE_rot(y_true, y_pred):
-    # return K.mean(K.abs((y_pred - y_true)*y_true*10000))
-    # condition = tf.greater(y_true*10000,tf.ones_like(y_true,dtype="float32"))
-    # y_weight = tf.where(condition,y_true*10000,tf.ones_like(y_true,dtype="float32"))
-
     condition = tf.greater(tf.abs(y_true),tf.ones_like(y_true,dtype="float32")*0.05)
-
-    # ### New weight!!!code report error
-    # y_weight = tf.where(condition,
-    #                     tf.greater(tf.ones_like(y_true,dtype="float32")*10,tf.ones_like(y_true,dtype="float32")),
-    #                     tf.ones_like(y_true,dtype="float32"))
-
     y_weight = tf.where(condition,tf.ones_like(y_true,dtype="float32")*200*tf.abs(y_true),tf.ones_like(y_true,dtype="float32"))
     return K.mean(K.square(y_pred -y_true)*y_weight, axis=-1)
 
@@ -337,18 +287,13 @@ def main_test_NoGT(interval_frame, img_grad, withGT, data_path, save_path,
     # choose to use gpu or cpu
     use_gpu = True
     if not withGT:        
-        VIDEO_FILE = data_path+[f for f in os.listdir(data_path) if '.mp4' in f][0]   # /u/erdos/csga/jzhou40/MRI_Project/sub-NC999_head_pose_data_zhao/sub-NC999_ses-20190702_task-TASK_acq-normal_run-01_bold_video_cropped.mp4'
+        VIDEO_FILE = data_path+[f for f in os.listdir(data_path) if '.mp4' in f][0]   
         print('VIDEO_FILE: ',VIDEO_FILE)
 
-        folder_name = VIDEO_FILE.split("/")[-1].rstrip()[:-4]+"_frames"  # sub-NC999_ses-20190702_task-TASK_acq-normal_run-01_bold_video_cropped_frames
+        folder_name = VIDEO_FILE.split("/")[-1].rstrip()[:-4]+"_frames"  
         print('folder_name: ',folder_name)
         folder_path = data_path + folder_name+'/'
-        # print('folder_path:',folder_path)
-        # if os.path.exists(folder_path) and len(os.listdir(folder_path)) < 10:
-        #     print("existing directory for image cropped but it's null!")
-        #     os.system("rm -r " + folder_path)
-        #     print("remove folder")
-        # elif os.path.exists(folder_path):
+        
         if not os.path.exists(folder_path):
             print("Cropping the video to images!")
             m = os.umask(0)
@@ -421,17 +366,6 @@ def main_test_NoGT(interval_frame, img_grad, withGT, data_path, save_path,
 
         print("completed rotation part")
         
-
-
-    # # use gpu
-    # pred_trans = test_single_subject_gpu(store_image_dir = "./{}".format(folder_name), model_name = model_trans,
-    #                                          subject="{}".format(VIDEO_FILE.split("/")[-1].rstrip()[:-4]),
-    #                                          columns_name=["transX", "transY", "transZ"], save_dir_file=save_dir_file,use_gpu=use_gpu)
-    # print("completed translation part")
-
-    # combined rotation and translation
-    # result = pd.concat([pred_rot.iloc[:,:-1],pred_trans],axis = 1)
-    # result.to_csv("./{}/rot_trans.csv".format(YMD,HMS))
     end = time.time()
     print("time_cost:", end - start)
 
@@ -446,16 +380,16 @@ if __name__ == "__main__":
     img_grad = True
     print("image loading:", img_grad)
 
-    judge_rot_trans = "rot"
+    judge_rot_trans = sys.argv[1]
     print("rot or trans:",judge_rot_trans)
 
     crop = False
     combined_image = True
 
-    data_path = sys.argv[1] # load data
+    data_path = sys.argv[2] # load data
     print("data_path:",data_path)
 
-    save_path = sys.argv[2]  # save results
+    save_path = sys.argv[3]  # save results
 
     if not os.path.exists(save_path):
         m = os.umask(0)
@@ -467,20 +401,18 @@ if __name__ == "__main__":
     print("save_path:", save_path)
 
     try:
-        model_location = sys.argv[3]
+        model_location = sys.argv[4]
     except:
         pass
-    print("model location:", sys.argv[3])
+    print("model location:", sys.argv[4])
 
 
-    # test_list_withGT = [248, 249, 250, 251, 252, 254, 255, 150, 232, 233, 234, 235, 236, 237, 239, 240, 242, 243, 244, 245, 246, 247]#, 243, 244, 245, 246]
-    test_list_withGT = [248, 249] 
+    test_list_withGT = [248, 249, 250, 251, 252, 254, 255, 150, 232, 233, 234, 235, 236, 237, 239, 240, 242, 243, 244, 245, 246, 247]
+    # test_list_withGT = [248, 249] 
     test_list_noGT = [999,888]
 
     df_r_p_short = {}
     df_r_p_long = {}
-    ################################################################################################################
-    # load model:
     
     if judge_rot_trans == "rot":
         print("load model for columns: rotX , rotY, rotZ")
@@ -493,9 +425,7 @@ if __name__ == "__main__":
     if data_path[-3:] != "mp4":
         if data_path[-1] != "/":
             data_path = data_path + "/"
-        # for sub in test_list_withGT:
         for i in range(len(test_list_withGT)):
-            # try:
             sub = test_list_withGT[i]
             print("=======with GT: this is sub:", sub, flush=True)
             sub_path = data_path + [f for f in os.listdir(data_path) if str(sub) in f][0] + "/"
@@ -527,15 +457,11 @@ if __name__ == "__main__":
             print("saving to r-p file", flush=True)
             tmp_long.to_csv(save_path + "long_r2_p_value.csv")
 
-            # except:
-            #     print("something wrong with this sub:",sub, flush=True)
-            #     pass
-
         for i in range(len(test_list_noGT)):
             try:
                 sub = test_list_noGT[i]
                 print("========without GT: this is sub:", sub)
-                sub_path = data_path + [f for f in os.listdir(data_path) if str(sub) in f][0] + "/"  #'/u/erdos/csga/jzhou40/MRI_Project/sub-NC999_head_pose_data_zhao/'
+                sub_path = data_path + [f for f in os.listdir(data_path) if str(sub) in f][0] + "/"  
                 
                 print("========subject path", sub_path)
                 save_sub_path = save_path + "{}_{}_{}/".format("noskip","gradient", "full")
